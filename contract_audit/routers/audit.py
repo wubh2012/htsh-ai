@@ -208,6 +208,31 @@ async def approve_audit(result_id: int, request: ReviewRequest = ReviewRequest()
         return MessageResponse(message="审核已通过")
 
 
+@router.delete("/audit/{result_id}", response_model=MessageResponse)
+async def delete_audit(result_id: int):
+    """删除审核记录"""
+    async with get_db() as db:
+        cursor = await db.execute(
+            "SELECT id, file_path FROM audit_result WHERE id = ?", (result_id,)
+        )
+        row = await cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"审核记录 {result_id} 不存在")
+
+        # 删除文件
+        if row["file_path"] and os.path.exists(row["file_path"]):
+            try:
+                os.remove(row["file_path"])
+            except Exception:
+                pass  # 文件删除失败不影响记录删除
+
+        # 删除数据库记录
+        await db.execute("DELETE FROM audit_result WHERE id = ?", (result_id,))
+        await db.commit()
+
+        return MessageResponse(message="删除成功")
+
+
 @router.post("/audit/{result_id}/reject", response_model=MessageResponse)
 async def reject_audit(result_id: int, request: ReviewRequest = ReviewRequest()):
     """人工驳回审核"""

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同智能审核系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=2">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar-left">
+            <div class="sidebar-logo">
+                <h1>§ 合同审核</h1>
+                <span>智能法律服务</span>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" data-page="upload">
+                    <span class="icon">📤</span>
+                    <span class="text">上传合同</span>
+                </div>
+                <div class="nav-item" data-page="rules">
+                    <span class="icon">📋</span>
+                    <span class="text">规则管理</span>
+                </div>
+                <div class="nav-item" data-page="results">
+                    <span class="icon">📊</span>
+                    <span class="text">审核结果</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Page -->
+            <section id="page-upload" class="page-section active">
+                <div class="main-header">
+                    <h2>上传合同</h2>
+                    <p>支持 .docx 和 .pdf 格式，最大 10MB，上传后在审核结果页点击"AI审核"发起审核</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">文件上传</h3>
+                    </div>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">点击或拖拽文件到此处上传</div>
+                        <div class="upload-hint">支持 .docx 和 .pdf 格式</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".docx,.pdf">
+                    <div class="upload-progress" id="uploadProgress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">正在上传...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">最近上传</h3>
+                    </div>
+                    <div class="history-list" id="historyListUpload"></div>
+                </div>
+
+                <div class="usage-guide">
+                    <div class="usage-step"><span class="usage-num">1</span>上传合同文件（.docx / .pdf）</div>
+                    <div class="usage-step"><span class="usage-num">2</span>在审核结果页点击"AI审核"发起智能审核</div>
+                    <div class="usage-step"><span class="usage-num">3</span>查看风险点列表与AI总结</div>
+                    <div class="usage-step"><span class="usage-num">4</span>人工复核，点击通过或驳回</div>
+                </div>
+            </section>
+
+            <!-- Rules Page -->
+            <section id="page-rules" class="page-section">
+                <div class="main-header">
+                    <h2>规则管理</h2>
+                    <p>配置合同审核规则，包括条款缺失检查和风险关键词检查</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">审核规则</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openRuleModal()">+ 添加规则</button>
+                    </div>
+                    <div class="rule-list" id="ruleList"></div>
+                </div>
+            </section>
+
+            <!-- Results Page -->
+            <section id="page-results" class="page-section">
+                <div class="main-header">
+                    <h2>审核结果</h2>
+                    <p>查看AI审核结果，进行人工复核</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">审核详情</h3>
+                        <div id="resultActions" style="display: none; gap: 8px;">
+                            <button class="btn btn-primary btn-sm" id="btnAudit" onclick="triggerAuditFromButton()">🤖 AI审核</button>
+                            <button class="btn btn-success btn-sm" id="btnApprove" onclick="approveAudit()">✓ 通过</button>
+                            <button class="btn btn-danger btn-sm" id="btnReject" onclick="rejectAudit()">✗ 驳回</button>
+                        </div>
+                    </div>
+
+                    <div id="noResult" class="result-placeholder">
+                        <div class="result-placeholder-icon">📋</div>
+                        <p class="empty-state-text">暂无审核记录，请先上传合同</p>
+                    </div>
+
+                    <div id="resultDetail" class="audit-detail">
+                        <div class="result-header">
+                            <div>
+                                <div class="result-contract" id="contractName"></div>
+                                <div class="result-meta" id="contractMeta"></div>
+                            </div>
+                            <span id="auditStatusBadge" class="badge badge-pending"></span>
+                        </div>
+
+                        <div class="conclusion-box" id="conclusionBox">
+                            <div class="conclusion-title" id="aiConclusion"></div>
+                            <p class="conclusion-summary" id="aiSummary"></p>
+                        </div>
+
+                        <div class="risk-list" id="riskList"></div>
+
+                        <div class="review-section">
+                            <div class="review-comment">
+                                <label class="form-label">复核意见</label>
+                                <textarea class="form-textarea" id="auditorComment" placeholder="请输入复核意见（可选）"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">审核历史</h3>
+                    </div>
+                    <div class="history-list" id="historyList"></div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <!-- Rule Modal -->
+    <div class="modal-overlay" id="ruleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="ruleModalTitle">添加规则</h3>
+                <button class="modal-close" onclick="closeRuleModal()">×</button>
+            </div>
+            <form id="ruleForm">
+                <input type="hidden" id="ruleId">
+                <div class="form-group">
+                    <label class="form-label">规则名称</label>
+                    <input type="text" class="form-input" id="ruleName" required placeholder="如：保密条款检查">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">规则类型</label>
+                    <select class="form-select" id="ruleType" required>
+                        <option value="CHECK_MISSING">条款缺失检查</option>
+                        <option value="RISK_KEYWORD">风险关键词检查</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">检查内容</label>
+                    <input type="text" class="form-input" id="checkContent" required placeholder="如：保密条款">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">风险等级</label>
+                    <select class="form-select" id="riskLevel">
+                        <option value="1">1 - 很低</option>
+                        <option value="2">2 - 低</option>
+                        <option value="3" selected>3 - 中</option>
+                        <option value="4">4 - 高</option>
+                        <option value="5">5 - 很高</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">修改建议</label>
+                    <textarea class="form-textarea" id="suggestion" placeholder="如：建议在合同中添加保密条款"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeRuleModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message"></span>
+    </div>
+
+    <script src="/static/app.js?v=4"></script>
+</body>
+</html>

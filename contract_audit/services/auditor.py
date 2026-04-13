@@ -49,14 +49,6 @@ class Auditor:
         # 2. 获取启用的规则
         rules = await self.get_enabled_rules()
 
-        if not rules:
-            # 没有启用规则，直接通过
-            return AIResultDetail(
-                conclusion=AuditConclusion.PASS,
-                risk_points=[],
-                summary="未启用任何审核规则，合同自动通过"
-            )
-
         # 3. 构建Prompt
         prompt = self._build_audit_prompt(content_text, rules)
 
@@ -86,6 +78,22 @@ class Auditor:
         # 如果文本过长，分段处理
         if len(content_text) > TEXT_CHUNK_SIZE:
             content_text = content_text[:TEXT_CHUNK_SIZE] + "\n\n[...合同内容过长，已截断...]"
+
+        if not rules:
+            # 无规则时，进行通用法务审核
+            prompt = f"""请作为专业法务顾问，对以下合同进行全面的法律合规性审查。
+
+【合同内容】
+{content_text}
+
+【输出要求】
+请以JSON格式返回审核结果，包含以下字段：
+- conclusion: 审核结论，"PASS"表示通过，"FAIL"表示不通过需要修改，"REVIEW"表示需要人工复核
+- risk_points: 风险点列表，每个风险点包含：rule_id(填0), rule_name(风险类型名称), description(风险描述), suggestion(修改建议), risk_level(风险等级1-5)
+- summary: 总体评价
+
+请确保返回有效的JSON格式，不要包含其他文字。"""
+            return prompt
 
         # 格式化规则
         rules_text = []
