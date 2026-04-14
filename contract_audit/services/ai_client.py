@@ -1,6 +1,6 @@
 """AI调用客户端"""
 import json
-import httpx
+import aiohttp
 from typing import Optional, List, Dict, Any
 from config import AI_PROVIDERS, DEFAULT_PROVIDER
 
@@ -54,7 +54,7 @@ class AIClient:
         """调用智谱AI"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json; charset=utf-8"
         }
 
         payload = {
@@ -63,24 +63,28 @@ class AIClient:
             "temperature": kwargs.get("temperature", 0.3),
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(self.endpoint, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-
-            # 提取响应内容
-            if "choices" in data and len(data["choices"]) > 0:
-                return data["choices"][0]["message"]["content"]
-            elif "data" in data and len(data["data"]["choices"]) > 0:
-                return data["data"]["choices"][0]["message"]["content"]
-            else:
-                raise ValueError(f"智谱AI返回格式异常: {data}")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.endpoint, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=60, connect=30)) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        raise RuntimeError(f"智谱AI返回错误状态码 {response.status}: {response_text[:500]}")
+                    data = await response.json()
+                    # 提取响应内容
+                    if "choices" in data and len(data["choices"]) > 0:
+                        return data["choices"][0]["message"]["content"]
+                    elif "data" in data and len(data["data"]["choices"]) > 0:
+                        return data["data"]["choices"][0]["message"]["content"]
+                    else:
+                        raise ValueError(f"智谱AI返回格式异常: {data}")
+        except aiohttp.ClientError as e:
+            raise RuntimeError(f"智谱AI调用失败: {type(e).__name__}: {str(e)}")
 
     async def _call_dashscope(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """调用通义千问"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json; charset=utf-8"
         }
 
         payload = {
@@ -89,21 +93,25 @@ class AIClient:
             "temperature": kwargs.get("temperature", 0.3),
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(self.endpoint, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-
-            if "choices" in data and len(data["choices"]) > 0:
-                return data["choices"][0]["message"]["content"]
-            else:
-                raise ValueError(f"通义千问返回格式异常: {data}")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.endpoint, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=60, connect=30)) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        raise RuntimeError(f"通义千问返回错误状态码 {response.status}: {response_text[:500]}")
+                    data = await response.json()
+                    if "choices" in data and len(data["choices"]) > 0:
+                        return data["choices"][0]["message"]["content"]
+                    else:
+                        raise ValueError(f"通义千问返回格式异常: {data}")
+        except aiohttp.ClientError as e:
+            raise RuntimeError(f"通义千问调用失败: {type(e).__name__}: {str(e)}")
 
     async def _call_wenxin(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """调用百度文心一言"""
         # 文心一言使用不同的认证方式
         headers = {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json; charset=utf-8"
         }
 
         # 将消息格式转换为文心一言格式
@@ -123,21 +131,25 @@ class AIClient:
         # 文心一言需要在URL中包含api_key
         url = f"{self.endpoint}?access_token={self.api_key}"
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-
-            if "result" in data:
-                return data["result"]
-            else:
-                raise ValueError(f"文心一言返回格式异常: {data}")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=60, connect=30)) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        raise RuntimeError(f"文心一言返回错误状态码 {response.status}: {response_text[:500]}")
+                    data = await response.json()
+                    if "result" in data:
+                        return data["result"]
+                    else:
+                        raise ValueError(f"文心一言返回格式异常: {data}")
+        except aiohttp.ClientError as e:
+            raise RuntimeError(f"文心一言调用失败: {type(e).__name__}: {str(e)}")
 
     async def _call_openai(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """调用OpenAI GPT"""
+        """调用OpenAI GPT（使用aiohttp提高中文兼容性）"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json; charset=utf-8"
         }
 
         payload = {
@@ -146,15 +158,23 @@ class AIClient:
             "temperature": kwargs.get("temperature", 0.3),
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(self.endpoint, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-
-            if "choices" in data and len(data["choices"]) > 0:
-                return data["choices"][0]["message"]["content"]
-            else:
-                raise ValueError(f"OpenAI返回格式异常: {data}")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.endpoint, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=180, connect=30)) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        raise RuntimeError(f"AI服务返回错误状态码 {response.status}: {response_text[:500] if response_text else '无响应内容'}")
+                    data = await response.json()
+                    if "choices" in data and len(data["choices"]) > 0:
+                        return data["choices"][0]["message"]["content"]
+                    else:
+                        raise ValueError(f"OpenAI返回格式异常: {data}")
+        except aiohttp.ServerTimeoutError as e:
+            raise TimeoutError(f"AI服务读取超时，请检查网络连接或稍后重试。原始错误: {str(e) or 'TimeoutError'}")
+        except aiohttp.ClientError as e:
+            raise RuntimeError(f"AI服务连接失败: {type(e).__name__}: {str(e) or 'ClientError'}")
+        except Exception as e:
+            raise RuntimeError(f"AI服务调用失败: {type(e).__name__}: {str(e) or '未知错误'}")
 
     @staticmethod
     def get_supported_providers() -> List[str]:
