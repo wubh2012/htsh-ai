@@ -431,40 +431,180 @@ body {
 
 /* ========== Rule List ========== */
 .rule-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
 }
 
-.rule-item {
+/* ─── Rule Card ─── */
+.rule-card {
+    background: var(--cream);
+    border-radius: 12px;
+    border: 1px solid rgba(28,25,23,0.07);
+    padding: 0;
+    position: relative;
+    cursor: pointer;
+    transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+    overflow: hidden;
+}
+
+.rule-card:hover {
+    box-shadow: 0 6px 24px rgba(28,25,23,0.10);
+    transform: translateY(-2px);
+    border-color: rgba(28,25,23,0.12);
+}
+
+.rule-card.disabled {
+    opacity: 0.45;
+}
+
+/* Left accent bar */
+.rule-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+}
+
+.rule-card-accent.risk-high { background: #C0392B; }
+.rule-card-accent.risk-medium { background: #D97706; }
+.rule-card-accent.risk-low { background: #16A34A; }
+
+/* Card number watermark */
+.rule-card-num {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: rgba(28,25,23,0.05);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Card body */
+.rule-card-body {
+    padding: 20px 20px 16px 24px;
+}
+
+.rule-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+    margin-bottom: 10px;
+    padding-right: 32px;
+}
+
+.rule-card-meta {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px;
-    background: var(--cream-dark);
-    border-radius: var(--radius-md);
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
-.rule-item:hover {
-    background: var(--cream);
-    border-color: var(--bg-dark);
-    box-shadow: var(--shadow-sm);
+.rule-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
 }
 
-.rule-item.disabled {
+.rule-badge-type {
+    background: var(--bg);
+    color: var(--ink-light);
+}
+
+.rule-badge-risk.risk-high { background: #FEF2F2; color: #C0392B; }
+.rule-badge-risk.risk-medium { background: #FFFBEB; color: #D97706; }
+.rule-badge-risk.risk-low { background: #F0FDF4; color: #16A34A; }
+
+/* Expand hint */
+.rule-card-expand-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: var(--ink-light);
+    opacity: 0;
+    margin-top: 10px;
+    transition: opacity 0.2s;
+}
+
+.rule-card:hover .rule-card-expand-hint {
+    opacity: 0.6;
+}
+
+/* Expanded detail */
+.rule-card-detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rule-card.expanded .rule-card-detail {
+    max-height: 240px;
+}
+
+.rule-card-detail-inner {
+    padding: 0 20px 16px 24px;
+    border-top: 1px solid rgba(28,25,23,0.06);
+    margin-top: 12px;
+    padding-top: 14px;
+}
+
+.rule-detail-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-light);
     opacity: 0.5;
+    margin-bottom: 4px;
+}
+
+.rule-detail-check-content {
+    font-size: 0.82rem;
+    color: var(--ink-light);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.rule-detail-suggestion {
+    font-size: 0.82rem;
+    color: var(--sage);
+    line-height: 1.5;
+    background: rgba(107,123,108,0.08);
+    padding: 10px 12px;
+    border-radius: 6px;
+    border-left: 2px solid var(--sage);
+}
+
+/* Card footer */
+.rule-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 14px 24px;
+    border-top: 1px solid rgba(28,25,23,0.05);
 }
 
 .rule-toggle {
-    width: 44px;
-    height: 24px;
-    background: var(--bg-dark);
+    width: 36px;
+    height: 20px;
+    background: rgba(28,25,23,0.12);
     border-radius: 100px;
     position: relative;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background 0.25s;
     flex-shrink: 0;
 }
 
@@ -475,46 +615,87 @@ body {
 .rule-toggle::after {
     content: '';
     position: absolute;
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     background: white;
     border-radius: 50%;
     top: 3px;
     left: 3px;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow-sm);
+    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 .rule-toggle.active::after {
-    left: 23px;
+    left: 19px;
 }
 
-.rule-info {
-    flex: 1;
-    min-width: 0;
+/* Icon-only action buttons */
+.rule-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
 }
 
-.rule-name {
-    font-weight: 500;
-    margin-bottom: 4px;
+.rule-card:hover .rule-actions {
+    opacity: 1;
+}
+
+.rule-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: background 0.15s;
+}
+
+.rule-icon-btn.edit {
+    background: rgba(28,25,23,0.06);
+    color: var(--ink-light);
+}
+
+.rule-icon-btn.edit:hover {
+    background: rgba(28,25,23,0.12);
     color: var(--ink);
 }
 
-.rule-meta {
-    font-size: 0.8rem;
-    color: var(--ink-light);
-    opacity: 0.7;
+.rule-icon-btn.delete {
+    background: rgba(155,44,44,0.08);
+    color: var(--error);
 }
 
-.rule-actions {
-    display: flex;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+.rule-icon-btn.delete:hover {
+    background: rgba(155,44,44,0.15);
 }
 
-.rule-item:hover .rule-actions {
-    opacity: 1;
+/* Add rule button */
+.card-header .btn-add-rule,
+button.btn-add-rule {
+    background: var(--ink) !important;
+    color: var(--cream) !important;
+    border: none !important;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    box-shadow: none;
+}
+
+.card-header .btn-add-rule:hover,
+button.btn-add-rule:hover {
+    background: var(--ink-light) !important;
+    transform: translateY(-1px);
 }
 
 /* ========== Audit Result ========== */

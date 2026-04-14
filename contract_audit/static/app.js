@@ -317,23 +317,55 @@ function renderRules() {
     }
 
     container.innerHTML = '';
-    ruleList.forEach(rule => {
-        const item = document.createElement('div');
-        item.className = `rule-item ${rule.enabled ? '' : 'disabled'}`;
-        item.innerHTML = `
-            <div class="rule-toggle ${rule.enabled ? 'active' : ''}" onclick="toggleRule(${rule.id})"></div>
-            <div class="rule-info">
-                <div class="rule-name">${rule.rule_name}</div>
-                <div class="rule-meta">
-                    ${rule.rule_type === 'CHECK_MISSING' ? '条款缺失' : '风险关键词'} · 风险等级 ${rule.risk_level}
+    ruleList.forEach((rule, idx) => {
+        const riskClass = rule.risk_level >= 4 ? 'risk-high' : (rule.risk_level >= 3 ? 'risk-medium' : 'risk-low');
+        const riskLabel = rule.risk_level >= 4 ? '高' : (rule.risk_level >= 3 ? '中' : '低');
+        const typeLabel = rule.rule_type === 'CHECK_MISSING' ? '条款缺失' : '风险关键词';
+
+        const card = document.createElement('div');
+        card.className = `rule-card ${riskClass} ${rule.enabled ? '' : 'disabled'}`;
+        card.dataset.ruleId = rule.id;
+
+        card.innerHTML = `
+            <div class="rule-card-accent ${riskClass}"></div>
+            <div class="rule-card-num">${String(idx + 1).padStart(2, '0')}</div>
+            <div class="rule-card-body">
+                <div class="rule-card-name">${rule.rule_name}</div>
+                <div class="rule-card-meta">
+                    <span class="rule-badge rule-badge-type">${typeLabel}</span>
+                    <span class="rule-badge rule-badge-risk ${riskClass}">风险 ${riskLabel}</span>
+                </div>
+                <div class="rule-card-expand-hint">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    点击查看详情
                 </div>
             </div>
-            <div class="rule-actions">
-                <button class="btn btn-ghost btn-sm" onclick="editRule(${rule.id})">编辑</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteRule(${rule.id})">删除</button>
+            <div class="rule-card-detail">
+                <div class="rule-card-detail-inner">
+                    <div class="rule-detail-label">检查内容</div>
+                    <div class="rule-detail-check-content">${rule.check_content}</div>
+                    ${rule.suggestion ? `
+                        <div class="rule-detail-label">修改建议</div>
+                        <div class="rule-detail-suggestion">${rule.suggestion}</div>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="rule-card-footer">
+                <div class="rule-toggle ${rule.enabled ? 'active' : ''}" onclick="event.stopPropagation(); toggleRule(${rule.id})"></div>
+                <div class="rule-actions">
+                    <button class="rule-icon-btn edit" onclick="event.stopPropagation(); editRule(${rule.id})" title="编辑">✎</button>
+                    <button class="rule-icon-btn delete" onclick="event.stopPropagation(); deleteRule(${rule.id})" title="删除">✕</button>
+                </div>
             </div>
         `;
-        container.appendChild(item);
+
+        // Toggle expand on card click (not on toggle/edit/delete clicks)
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.rule-toggle') || e.target.closest('.rule-actions')) return;
+            card.classList.toggle('expanded');
+        });
+
+        container.appendChild(card);
     });
 }
 
