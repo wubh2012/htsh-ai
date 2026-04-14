@@ -1,21 +1,43 @@
 """文档解析服务"""
 import re
+import logging
 from pathlib import Path
 from typing import Optional
-import docx
-import fitz  # pymupdf
+
+logger = logging.getLogger(__name__)
+
+# 尝试导入 markitdown，优先使用
+try:
+    from markitdown import MarkItDown as MarkItDownParser
+    MARKDOWN_AVAILABLE = True
+except ImportError:
+    MARKDOWN_AVAILABLE = False
+    logger.warning("markitdown 未安装，将使用基础解析方式")
+
+# 保留原有的解析器作为备用
+try:
+    import docx
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+
+try:
+    import fitz  # pymupdf
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
 
 
 class DocumentParser:
-    """文档解析器，支持Word和PDF"""
+    """文档解析器，支持Word和PDF，优先使用markitdown转换为Markdown"""
 
     @staticmethod
     async def parse(file_path: str, file_type: str) -> str:
         """
-        解析文档并返回纯文本
+        解析文档并返回Markdown格式文本
         :param file_path: 文件路径
         :param file_type: "docx" 或 "pdf"
-        :return: 提取的纯文本
+        :return: Markdown格式的文本
         :raises ValueError: 不支持的文件类型或解析失败
         """
         file_path = Path(file_path)
@@ -32,62 +54,113 @@ class DocumentParser:
 
     @staticmethod
     async def _parse_docx(file_path: Path) -> str:
-        """解析Word文档"""
-        try:
-            doc = docx.Document(file_path)
-            paragraphs = []
+        """解析Word文档，优先使用markitdown"""
+        # 优先使用 markitdown
+        if MARKDOWN_AVAILABLE:
+            try:
+                parser = MarkItDownParser()
+                result = parser.convert(str(file_path))
+                markdown_text = result.markdown
+                if markdown_text and len(markdown_text.strip()) > 50:
+                    logger.info(f"markitdown 成功解析 docx: {file_path.name}")
+                    return DocumentParser._clean_markdown(markdown_text)
+            except Exception as e:
+                logger.warning(f"markitdown 解析 docx 失败，尝试备用方法: {e}")
 
-            for para in doc.paragraphs:
-                text = para.text.strip()
-                if text:
-                    paragraphs.append(text)
+        # 备用：使用 python-docx
+        if DOCX_AVAILABLE:
+            try:
+                doc = docx.Document(file_path)
+                paragraphs = []
 
-            # 也提取表格内容
-            for table in doc.tables:
-                for row in table.rows:
-                    row_text = " | ".join(cell.text.strip() for cell in row.cells if cell.text.strip())
-                    if row_text:
-                        paragraphs.append(row_text)
+                for para in doc.paragraphs:
+                    text = para.text.strip()
+                    if text:
+                        paragraphs.append(text)
 
-            text = "\n".join(paragraphs)
-            return DocumentParser._clean_text(text)
+                # 也提取表格内容
+                for table in doc.tables:
+                    for row in table.rows:
+                        row_text = " | ".join(cell.text.strip() for cell in row.cells if cell.text.strip())
+                        if row_text:
+                            paragraphs.append(row_text)
 
-        except Exception as e:
-            raise ValueError(f"解析Word文档失败: {str(e)}")
+                text = "\n".join(paragraphs)
+                logger.info(f"python-docx 成功解析 docx: {file_path.name}")
+                return DocumentParser._clean_text(text)
+
+            except Exception as e:
+                raise ValueError(f"解析Word文档失败: {str(e)}")
+
+        raise ValueError("解析Word文档失败：无可用的解析器，请安装 markitdown[docx] 或 python-docx")
 
     @staticmethod
     async def _parse_pdf(file_path: Path) -> str:
-        """解析PDF文档（文字型）"""
-        try:
-            doc = fitz.open(file_path)
-            paragraphs = []
+        """解析PDF文档，优先使用markitdown"""
+        # 优先使用 markitdown
+        if MARKDOWN_AVAILABLE:
+            try:
+                parser = MarkItDownParser()
+                result = parser.convert(str(file_path))
+                markdown_text = result.markdown
+                if markdown_text and len(markdown_text.strip()) > 50:
+                    logger.info(f"markitdown 成功解析 pdf: {file_path.name}")
+                    return DocumentParser._clean_markdown(markdown_text)
+            except Exception as e:
+                logger.warning(f"markitdown 解析 pdf 失败，尝试备用方法: {e}")
 
-            for page_num in range(len(doc)):
-                page = doc[page_num]
-                text = page.get_text()
+        # 备用：使用 pymupdf
+        if PDF_AVAILABLE:
+            try:
+                doc = fitz.open(file_path)
+                paragraphs = []
 
-                # 按行分割，过滤空行
-                lines = [line.strip() for line in text.split("\n") if line.strip()]
-                if lines:
-                    # 将同一页的内容合并，以换行分隔
-                    paragraphs.extend(lines)
+                for page_num in range(len(doc)):
+                    page = doc[page_num]
+                    text = page.get_text()
 
-            doc.close()
+                    # 按行分割，过滤空行
+                    lines = [line.strip() for line in text.split("\n") if line.strip()]
+                    if lines:
+                        # 将同一页的内容合并，以换行分隔
+                        paragraphs.extend(lines)
 
-            if not paragraphs:
-                raise ValueError("PDF文档可能是扫描版或无文字内容，MVP阶段不支持")
+                doc.close()
 
-            text = "\n".join(paragraphs)
-            return DocumentParser._clean_text(text)
+                if not paragraphs:
+                    raise ValueError("PDF文档可能是扫描版或无文字内容")
 
-        except Exception as e:
-            if "scan" in str(e).lower() or "image" in str(e).lower():
-                raise ValueError("PDF文档可能是扫描版，MVP阶段不支持")
-            raise ValueError(f"解析PDF文档失败: {str(e)}")
+                text = "\n".join(paragraphs)
+                logger.info(f"pymupdf 成功解析 pdf: {file_path.name}")
+                return DocumentParser._clean_text(text)
+
+            except Exception as e:
+                if "scan" in str(e).lower() or "image" in str(e).lower():
+                    raise ValueError("PDF文档可能是扫描版，MVP阶段不支持")
+                raise ValueError(f"解析PDF文档失败: {str(e)}")
+
+        raise ValueError("解析PDF文档失败：无可用的解析器，请安装 markitdown[pdf] 或 pymupdf")
+
+    @staticmethod
+    def _clean_markdown(markdown_text: str) -> str:
+        """清洗Markdown文本"""
+        if not markdown_text:
+            return ""
+
+        # 保留 Markdown 格式结构，只做基本清洗
+        text = re.sub(r'\r\n', '\n', markdown_text)  # 统一换行符
+        text = re.sub(r'[ \t]+\n', '\n', text)  # 行尾空格去除
+        text = re.sub(r'\n{3,}', '\n\n', text)  # 超过2个连续换行缩减为2个
+
+        # 处理特殊编码字符
+        text = text.replace('\u200b', '')  # 零宽空格
+        text = text.replace('\ufeff', '')  # BOM字符
+
+        return text.strip()
 
     @staticmethod
     def _clean_text(text: str) -> str:
-        """清洗文本"""
+        """清洗纯文本"""
         # 去除多余空白字符
         text = re.sub(r'[ \t]+', ' ', text)  # 多个空格合并为一个
         text = re.sub(r'\n{3,}', '\n\n', text)  # 超过2个连续换行缩减为2个
