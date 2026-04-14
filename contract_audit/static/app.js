@@ -205,7 +205,7 @@ function displayResult(data) {
     const riskList = document.getElementById('riskList');
     riskList.innerHTML = '';
 
-    const riskPoints = data.ai_result?.risk_points || [];
+    const riskPoints = (data.ai_result?.risk_points || []).sort((a, b) => (b.risk_level || 0) - (a.risk_level || 0));
     if (riskPoints.length === 0) {
         riskList.innerHTML = `
             <div class="risk-item" style="text-align: center; padding: 32px;">
