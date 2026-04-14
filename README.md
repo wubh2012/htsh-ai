@@ -14,33 +14,106 @@
 
 - **框架**: FastAPI + Uvicorn
 - **AI 集成**: 支持多模型配置
-- **文档解析**: python-docx, PyMuPDF
+- **文档解析**: python-docx, PyMuPDF, markitdown
 - **数据库**: SQLite (aiosqlite)
 - **数据验证**: Pydantic v2
 
-## 快速开始
+## 快速开始（Windows）
+
+下面给出在 Windows（PowerShell / CMD）下的最小可执行步骤，以及 VS Code 调试说明。
+
+### 先决条件
+
+- 已安装 Python 3.8+（建议 3.10+ 或 3.12）
+- 在项目根目录（本仓库根）运行下面命令
+
+### 创建并激活虚拟环境
+
+PowerShell:
+```powershell
+python -m venv .venv
+\.venv\Scripts\Activate.ps1
+```
+
+CMD:
+```cmd
+python -m venv .venv
+.venv\Scripts\activate
+```
 
 ### 安装依赖
 
-```bash
-cd contract_audit
-pip install -r requirements.txt
+推荐使用项目中已有的 `contract_audit/requirements.txt`：
+
+```powershell
+pip install --upgrade pip
+pip install -r contract_audit\requirements.txt
 ```
 
-### 启动服务
+或者使用项目根新增的安装脚本（已包含在仓库）：
 
-```bash
+```powershell
+.\scripts\setup_windows.ps1         # 创建 venv、升级 pip 并安装依赖
+.\scripts\setup_windows.ps1 -RunApp # 同时启动应用（可选）
+.\scripts\setup_windows.ps1 -RunTests # 安装并运行 pytest（可选）
+```
+
+### 运行应用（本地）
+
+项目默认已将 Uvicorn 运行端口修改为 `9999`。推荐在 `contract_audit` 目录下以虚拟环境的 Python 启动：
+
+```powershell
+cd contract_audit
+..\ .venv\Scripts\python.exe -m uvicorn main:app --reload --host 0.0.0.0 --port 9999
+```
+
+或者（已修改 `main.py` 默认端口）：
+
+```powershell
 cd contract_audit
 python main.py
 ```
 
-服务将在 `http://localhost:8000` 启动
+健康检查:
 
-### API 文档
+```
+GET http://127.0.0.1:9999/health
+```
 
-启动后访问:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+API 文档（启动后）:
+- Swagger UI: `http://127.0.0.1:9999/docs`
+- ReDoc: `http://127.0.0.1:9999/redoc`
+
+### 在 VS Code 中调试
+
+- 已更新调试配置文件：`.vscode/launch.json`，添加了 "Python: FastAPI 调试" 配置，使用工作区虚拟环境的 Python 以模块方式启动 `uvicorn`，端口为 `9999`。
+- 在 VS Code 中选择配置 `Python: FastAPI 调试`，按 F5 启动调试（会在 `contract_audit` 目录下以 `main:app` 运行，支持热重载）。
+
+### 运行测试
+
+如果需要运行测试：
+
+```powershell
+.venv\Scripts\Activate.ps1
+pip install pytest
+pytest -q
+```
+
+### 配置项与环境变量
+
+- 数据库文件位于：`contract_audit/data/contract_audit.db`（使用 SQLite，首次运行时会自动创建）
+- AI 提供商密钥等请在 `contract_audit/config.py` 中配置，或通过环境变量/你的部署方式注入。
+
+### 常见问题
+
+- 如果启动时报 `ModuleNotFoundError: No module named 'models'`，请确保以 `contract_audit` 为当前工作目录运行 uvicorn（launch.json 与上面的命令已做相应处理）。
+- 若 PowerShell 无法激活脚本，可能受执行策略限制，临时解决：
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+---
+如需我将 README 中的命令改为适配你的常用 shell（例如 Git Bash / WSL），或把启动脚本改为 cross-platform 版本，请告诉我。
 
 ## 项目结构
 

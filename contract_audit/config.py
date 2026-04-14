@@ -42,7 +42,7 @@ AI_PROVIDERS = {
 DEFAULT_PROVIDER = "siliconflow"
 
 # 合同文本分段大小（字符数）
-TEXT_CHUNK_SIZE = 8000
+TEXT_CHUNK_SIZE = 80000
 
 # 支持的文件类型
 SUPPORTED_FILE_TYPES = ["docx", "pdf"]
