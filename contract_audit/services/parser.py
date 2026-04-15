@@ -60,7 +60,7 @@ class DocumentParser:
             try:
                 parser = MarkItDownParser()
                 result = parser.convert(str(file_path))
-                markdown_text = result.markdown
+                markdown_text = result.text_content
                 if markdown_text and len(markdown_text.strip()) > 50:
                     logger.info(f"markitdown 成功解析 docx: {file_path.name}")
                     return DocumentParser._clean_markdown(markdown_text)
@@ -102,7 +102,7 @@ class DocumentParser:
             try:
                 parser = MarkItDownParser()
                 result = parser.convert(str(file_path))
-                markdown_text = result.markdown
+                markdown_text = result.text_content
                 if markdown_text and len(markdown_text.strip()) > 50:
                     logger.info(f"markitdown 成功解析 pdf: {file_path.name}")
                     return DocumentParser._clean_markdown(markdown_text)
