@@ -331,24 +331,34 @@ function renderRules() {
 
         card.innerHTML = `
             <div class="rule-card-accent ${riskClass}"></div>
-            <div class="rule-card-num">${String(idx + 1).padStart(2, '0')}</div>
             <div class="rule-card-body">
-                <div class="rule-card-name">${rule.rule_name}</div>
-                <div class="rule-card-meta">
-                    <span class="rule-badge rule-badge-type">${typeLabel}</span>
-                    <span class="rule-badge rule-badge-risk ${riskClass}">风险 ${riskLabel}</span>
+                <div class="rule-card-header">
+                    <div class="rule-card-left">
+                        <div class="rule-card-num">${String(idx + 1).padStart(2, '0')}</div>
+                        <div class="rule-card-main">
+                            <div class="rule-card-name">${rule.rule_name}</div>
+                            <div class="rule-card-meta">
+                                <span class="rule-badge rule-badge-type">${typeLabel}</span>
+                                <span class="rule-badge rule-badge-risk ${riskClass}">风险 ${riskLabel}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-toggle ${rule.enabled ? 'active' : ''}" onclick="event.stopPropagation(); toggleRule(${rule.id})"></div>
+                </div>
+                <div class="rule-card-detail">
+                    <div class="rule-detail-item">
+                        <div class="rule-detail-label">检查内容</div>
+                        <div class="rule-detail-check-content">${rule.check_content}</div>
+                    </div>
+                    ${rule.suggestion ? `
+                    <div class="rule-detail-item">
+                        <div class="rule-detail-label">修改建议</div>
+                        <div class="rule-detail-suggestion">${rule.suggestion}</div>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
-            <div class="rule-card-detail">
-                <div class="rule-detail-label">检查内容</div>
-                <div class="rule-detail-check-content">${rule.check_content}</div>
-                ${rule.suggestion ? `
-                    <div class="rule-detail-label">修改建议</div>
-                    <div class="rule-detail-suggestion">${rule.suggestion}</div>
-                ` : ''}
-            </div>
             <div class="rule-card-footer">
-                <div class="rule-toggle ${rule.enabled ? 'active' : ''}" onclick="event.stopPropagation(); toggleRule(${rule.id})"></div>
                 <div class="rule-actions">
                     <button class="rule-icon-btn edit" onclick="event.stopPropagation(); editRule(${rule.id})" title="编辑">✎</button>
                     <button class="rule-icon-btn delete" onclick="event.stopPropagation(); deleteRule(${rule.id})" title="删除">✕</button>
@@ -489,22 +499,38 @@ function renderAIConfigs() {
         card.innerHTML = `
             <div class="rule-card-accent ${enabledClass}"></div>
             <div class="rule-card-body">
-                <div class="rule-card-name">${config.provider}</div>
-                <div class="rule-card-meta">
-                    <span class="rule-badge rule-badge-type">${getProviderName(config.provider)}</span>
-                    <span class="rule-badge ${enabledClass === 'enabled' ? 'rule-badge-risk-low' : 'rule-badge-risk-high'}">${enabledText}</span>
+                <div class="rule-card-header">
+                    <div class="rule-card-left">
+                        <div class="rule-card-main">
+                            <div class="rule-card-name">${config.provider}</div>
+                            <div class="rule-card-meta">
+                                <span class="rule-badge rule-badge-type">${getProviderName(config.provider)}</span>
+                                <span class="rule-badge ${enabledClass === 'enabled' ? 'rule-badge-risk-low' : 'rule-badge-risk-high'}">${enabledText}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-toggle ${config.enabled ? 'active' : ''}" onclick="event.stopPropagation(); toggleAIConfig('${config.provider}', ${!config.enabled})"></div>
                 </div>
                 <div class="rule-card-detail">
-                    <div class="rule-card-detail-inner">
+                    <div class="rule-detail-item">
                         <div class="rule-detail-label">API密钥</div>
                         <div class="rule-detail-check-content">${maskedKey}</div>
-                        ${config.endpoint ? `<div class="rule-detail-label">Endpoint</div><div class="rule-detail-check-content">${config.endpoint}</div>` : ''}
-                        ${config.model ? `<div class="rule-detail-label">模型</div><div class="rule-detail-check-content">${config.model}</div>` : ''}
                     </div>
+                    ${config.endpoint ? `
+                    <div class="rule-detail-item">
+                        <div class="rule-detail-label">Endpoint</div>
+                        <div class="rule-detail-check-content">${config.endpoint}</div>
+                    </div>
+                    ` : ''}
+                    ${config.model ? `
+                    <div class="rule-detail-item">
+                        <div class="rule-detail-label">模型</div>
+                        <div class="rule-detail-check-content">${config.model}</div>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
             <div class="rule-card-footer">
-                <div class="rule-toggle ${config.enabled ? 'active' : ''}" onclick="event.stopPropagation(); toggleAIConfig('${config.provider}', ${!config.enabled})"></div>
                 <div class="rule-actions">
                     <button class="rule-icon-btn edit" onclick="event.stopPropagation(); editAIConfig('${config.provider}')" title="编辑">✎</button>
                     <button class="rule-icon-btn delete" onclick="event.stopPropagation(); deleteAIConfig('${config.provider}')" title="删除">✕</button>
