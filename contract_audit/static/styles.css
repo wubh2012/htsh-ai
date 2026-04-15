@@ -430,9 +430,9 @@ body {
 }
 
 /* ========== Rule List ========== */
-.rule-list {
+.rule-list, .ai-config-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 }
 
@@ -443,9 +443,9 @@ body {
     border: 1px solid rgba(28,25,23,0.07);
     padding: 0;
     position: relative;
-    cursor: pointer;
     transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
     overflow: hidden;
+    display: flex;
 }
 
 .rule-card:hover {
@@ -460,34 +460,21 @@ body {
 
 /* Left accent bar */
 .rule-card-accent {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 3px;
-    height: 100%;
+    flex-shrink: 0;
 }
 
 .rule-card-accent.risk-high { background: #C0392B; }
 .rule-card-accent.risk-medium { background: #D97706; }
 .rule-card-accent.risk-low { background: #16A34A; }
-
-/* Card number watermark */
-.rule-card-num {
-    position: absolute;
-    top: 12px;
-    right: 14px;
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: rgba(28,25,23,0.05);
-    line-height: 1;
-    user-select: none;
-    pointer-events: none;
-}
+.rule-card-accent.enabled { background: var(--sage); }
+.rule-card-accent.disabled { background: rgba(28,25,23,0.2); }
 
 /* Card body */
 .rule-card-body {
-    padding: 20px 20px 16px 24px;
+    flex: 1;
+    padding: 16px 20px;
+    min-width: 0;
 }
 
 .rule-card-name {
@@ -496,8 +483,7 @@ body {
     font-weight: 600;
     color: var(--ink);
     line-height: 1.4;
-    margin-bottom: 10px;
-    padding-right: 32px;
+    margin-bottom: 8px;
 }
 
 .rule-card-meta {
@@ -526,39 +512,16 @@ body {
 .rule-badge-risk.risk-high { background: #FEF2F2; color: #C0392B; }
 .rule-badge-risk.risk-medium { background: #FFFBEB; color: #D97706; }
 .rule-badge-risk.risk-low { background: #F0FDF4; color: #16A34A; }
+.rule-badge-risk-low { background: #F0FDF4; color: #16A34A; }
+.rule-badge-risk-high { background: #FEF2F2; color: #C0392B; }
 
-/* Expand hint */
-.rule-card-expand-hint {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    color: var(--ink-light);
-    opacity: 0;
-    margin-top: 10px;
-    transition: opacity 0.2s;
-}
-
-.rule-card:hover .rule-card-expand-hint {
-    opacity: 0.6;
-}
-
-/* Expanded detail */
+/* Card detail - shown on right side */
 .rule-card-detail {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.rule-card.expanded .rule-card-detail {
-    max-height: 240px;
-}
-
-.rule-card-detail-inner {
-    padding: 0 20px 16px 24px;
-    border-top: 1px solid rgba(28,25,23,0.06);
-    margin-top: 12px;
-    padding-top: 14px;
+    width: 280px;
+    flex-shrink: 0;
+    padding: 16px 20px;
+    border-left: 1px solid rgba(28,25,23,0.06);
+    background: rgba(28,25,23,0.02);
 }
 
 .rule-detail-label {
@@ -592,9 +555,10 @@ body {
 .rule-card-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px 14px 24px;
-    border-top: 1px solid rgba(28,25,23,0.05);
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 12px 16px 12px 0;
+    margin-left: auto;
 }
 
 .rule-toggle {
@@ -1027,6 +991,48 @@ button.btn-add-rule:hover {
     outline: none;
     border-color: var(--gold);
     box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1);
+}
+
+.form-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.form-toggle input[type="checkbox"] {
+    display: none;
+}
+
+.form-toggle .toggle-label {
+    width: 44px;
+    height: 24px;
+    background: rgba(28,25,23,0.12);
+    border-radius: 100px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.25s;
+    flex-shrink: 0;
+}
+
+.form-toggle input:checked + .toggle-label {
+    background: var(--sage);
+}
+
+.form-toggle .toggle-label::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.form-toggle input:checked + .toggle-label::after {
+    left: 23px;
 }
 
 .form-actions {

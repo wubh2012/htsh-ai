@@ -3,6 +3,7 @@ const API_BASE = '/api';
 let currentResultId = null;
 let ruleList = [];
 let historyList = [];
+let aiConfigList = [];
 
 // ========== Navigation ==========
 function switchPage(pageName) {
@@ -23,6 +24,8 @@ function switchPage(pageName) {
         loadRules();
     } else if (pageName === 'results') {
         loadHistory();
+    } else if (pageName === 'ai-config') {
+        loadAIConfigs();
     }
 }
 
@@ -335,20 +338,14 @@ function renderRules() {
                     <span class="rule-badge rule-badge-type">${typeLabel}</span>
                     <span class="rule-badge rule-badge-risk ${riskClass}">风险 ${riskLabel}</span>
                 </div>
-                <div class="rule-card-expand-hint">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                    点击查看详情
-                </div>
             </div>
             <div class="rule-card-detail">
-                <div class="rule-card-detail-inner">
-                    <div class="rule-detail-label">检查内容</div>
-                    <div class="rule-detail-check-content">${rule.check_content}</div>
-                    ${rule.suggestion ? `
-                        <div class="rule-detail-label">修改建议</div>
-                        <div class="rule-detail-suggestion">${rule.suggestion}</div>
-                    ` : ''}
-                </div>
+                <div class="rule-detail-label">检查内容</div>
+                <div class="rule-detail-check-content">${rule.check_content}</div>
+                ${rule.suggestion ? `
+                    <div class="rule-detail-label">修改建议</div>
+                    <div class="rule-detail-suggestion">${rule.suggestion}</div>
+                ` : ''}
             </div>
             <div class="rule-card-footer">
                 <div class="rule-toggle ${rule.enabled ? 'active' : ''}" onclick="event.stopPropagation(); toggleRule(${rule.id})"></div>
@@ -358,12 +355,6 @@ function renderRules() {
                 </div>
             </div>
         `;
-
-        // Toggle expand on card click (not on toggle/edit/delete clicks)
-        card.addEventListener('click', (e) => {
-            if (e.target.closest('.rule-toggle') || e.target.closest('.rule-actions')) return;
-            card.classList.toggle('expanded');
-        });
 
         container.appendChild(card);
     });
@@ -461,6 +452,198 @@ async function deleteRule(ruleId) {
         showToast('删除失败', 'error');
     }
 }
+
+// ========== AI Config ==========
+async function loadAIConfigs() {
+    try {
+        const response = await fetch(`${API_BASE}/ai-config`);
+        aiConfigList = await response.json();
+        renderAIConfigs();
+    } catch (error) {
+        showToast('加载AI配置失败', 'error');
+    }
+}
+
+function renderAIConfigs() {
+    const container = document.getElementById('aiConfigList');
+    if (!container) return;
+
+    if (aiConfigList.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚙️</div>
+                <p class="empty-state-text">暂无AI配置</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = '';
+    aiConfigList.forEach(config => {
+        const enabledClass = config.enabled ? 'enabled' : 'disabled';
+        const enabledText = config.enabled ? '已启用' : '已禁用';
+        const maskedKey = config.api_key ? '••••••••' + config.api_key.slice(-4) : '未设置';
+
+        const card = document.createElement('div');
+        card.className = `rule-card ${enabledClass}`;
+        card.innerHTML = `
+            <div class="rule-card-accent ${enabledClass}"></div>
+            <div class="rule-card-body">
+                <div class="rule-card-name">${config.provider}</div>
+                <div class="rule-card-meta">
+                    <span class="rule-badge rule-badge-type">${getProviderName(config.provider)}</span>
+                    <span class="rule-badge ${enabledClass === 'enabled' ? 'rule-badge-risk-low' : 'rule-badge-risk-high'}">${enabledText}</span>
+                </div>
+                <div class="rule-card-detail">
+                    <div class="rule-card-detail-inner">
+                        <div class="rule-detail-label">API密钥</div>
+                        <div class="rule-detail-check-content">${maskedKey}</div>
+                        ${config.endpoint ? `<div class="rule-detail-label">Endpoint</div><div class="rule-detail-check-content">${config.endpoint}</div>` : ''}
+                        ${config.model ? `<div class="rule-detail-label">模型</div><div class="rule-detail-check-content">${config.model}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="rule-card-footer">
+                <div class="rule-toggle ${config.enabled ? 'active' : ''}" onclick="event.stopPropagation(); toggleAIConfig('${config.provider}', ${!config.enabled})"></div>
+                <div class="rule-actions">
+                    <button class="rule-icon-btn edit" onclick="event.stopPropagation(); editAIConfig('${config.provider}')" title="编辑">✎</button>
+                    <button class="rule-icon-btn delete" onclick="event.stopPropagation(); deleteAIConfig('${config.provider}')" title="删除">✕</button>
+                </div>
+            </div>
+        `;
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.rule-toggle') || e.target.closest('.rule-actions')) return;
+            card.classList.toggle('expanded');
+        });
+        container.appendChild(card);
+    });
+}
+
+function getProviderName(key) {
+    const names = {
+        'zhipuai': '智谱AI',
+        'dashscope': '通义千问',
+        'openai': 'OpenAI',
+        'siliconflow': '硅基流动'
+    };
+    return names[key] || key;
+}
+
+async function toggleAIConfig(provider, enabled) {
+    try {
+        const response = await fetch(`${API_BASE}/ai-config/${provider}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+        if (!response.ok) throw new Error('操作失败');
+        showToast(enabled ? '已启用' : '已禁用', 'success');
+        loadAIConfigs();
+    } catch (error) {
+        showToast('切换失败', 'error');
+    }
+}
+
+async function openAIConfigModal(provider = null) {
+    const modal = document.getElementById('aiConfigModal');
+    if (!modal) return;
+
+    if (provider) {
+        const config = aiConfigList.find(c => c.provider === provider);
+        if (config) {
+            document.getElementById('aiConfigModalTitle').textContent = '编辑AI配置';
+            document.getElementById('aiConfigOriginalProvider').value = provider;
+            document.getElementById('aiConfigProvider').value = config.provider;
+            document.getElementById('aiConfigApiKey').value = config.api_key;
+            document.getElementById('aiConfigApiKey').required = false;
+            document.getElementById('aiConfigEndpoint').value = config.endpoint || '';
+            document.getElementById('aiConfigModel').value = config.model || '';
+            document.getElementById('aiConfigEnabled').checked = config.enabled;
+        }
+    } else {
+        document.getElementById('aiConfigModalTitle').textContent = '添加AI配置';
+        document.getElementById('aiConfigForm').reset();
+        document.getElementById('aiConfigOriginalProvider').value = '';
+        document.getElementById('aiConfigApiKey').required = true;
+        document.getElementById('aiConfigEndpoint').required = true;
+        document.getElementById('aiConfigModel').required = true;
+    }
+
+    modal.classList.add('active');
+}
+
+function closeAIConfigModal() {
+    const modal = document.getElementById('aiConfigModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function editAIConfig(provider) {
+    openAIConfigModal(provider);
+}
+
+async function deleteAIConfig(provider) {
+    if (!confirm(`确定要删除 ${getProviderName(provider)} 配置吗？`)) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/ai-config/${provider}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('删除失败');
+        showToast('删除成功', 'success');
+        loadAIConfigs();
+    } catch (error) {
+        showToast('删除失败', 'error');
+    }
+}
+
+// AI Config Form Submit
+document.addEventListener('DOMContentLoaded', () => {
+    const aiConfigForm = document.getElementById('aiConfigForm');
+    if (aiConfigForm) {
+        aiConfigForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const originalProvider = document.getElementById('aiConfigOriginalProvider').value;
+            const provider = document.getElementById('aiConfigProvider').value;
+            const apiKey = document.getElementById('aiConfigApiKey').value;
+            const endpoint = document.getElementById('aiConfigEndpoint').value;
+            const model = document.getElementById('aiConfigModel').value;
+            const enabled = document.getElementById('aiConfigEnabled').checked;
+
+            const data = {
+                provider,
+                enabled,
+                endpoint: endpoint || null,
+                model: model || null
+            };
+            if (apiKey) data.api_key = apiKey;
+
+            try {
+                const isEdit = !!originalProvider;
+                const url = isEdit ? `${API_BASE}/ai-config/${originalProvider}` : `${API_BASE}/ai-config`;
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || '保存失败');
+                }
+
+                showToast('保存成功', 'success');
+                closeAIConfigModal();
+                loadAIConfigs();
+
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+    }
+});
 
 // ========== History ==========
 async function loadHistory() {

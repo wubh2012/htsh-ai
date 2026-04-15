@@ -34,7 +34,7 @@ AI_PROVIDERS = {
         "name": "硅基流动",
         "endpoint": "https://api.siliconflow.cn/v1/chat/completions",
         "model": "deepseek-ai/DeepSeek-V3.2",
-        "api_key": "sk-vcuwkdvtaiqskoxysaigkadbqoprprejgyncfkandqdlhtyv",  # 需要用户配置
+        "api_key": "",  # 需要用户配置，实际从数据库读取
     },
 }
 

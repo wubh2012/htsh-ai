@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=5">
+    <link rel="stylesheet" href="/static/styles.css?v=7">
 </head>
 <body>
     <div class="app-container">
@@ -29,6 +29,10 @@
                 <div class="nav-item" data-page="results">
                     <span class="icon">📊</span>
                     <span class="text">审核结果</span>
+                </div>
+                <div class="nav-item" data-page="ai-config">
+                    <span class="icon">⚙️</span>
+                    <span class="text">AI配置</span>
                 </div>
             </nav>
         </aside>
@@ -145,6 +149,22 @@
                     <div class="history-list" id="historyList"></div>
                 </div>
             </section>
+
+            <!-- AI Config Page -->
+            <section id="page-ai-config" class="page-section">
+                <div class="main-header">
+                    <h2>AI配置</h2>
+                    <p>管理AI服务提供商配置，包括API密钥、模型等参数</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">AI服务配置</h3>
+                        <button class="btn-add-rule" onclick="openAIConfigModal()">+ 添加配置</button>
+                    </div>
+                    <div class="ai-config-list" id="aiConfigList"></div>
+                </div>
+            </section>
         </main>
 
     </div>
@@ -201,6 +221,46 @@
         <span class="toast-message"></span>
     </div>
 
-    <script src="/static/app.js?v=6"></script>
+    <!-- AI Config Modal -->
+    <div class="modal-overlay" id="aiConfigModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="aiConfigModalTitle">添加AI配置</h3>
+                <button class="modal-close" onclick="closeAIConfigModal()">×</button>
+            </div>
+            <form id="aiConfigForm">
+                <input type="hidden" id="aiConfigOriginalProvider">
+                <div class="form-group">
+                    <label class="form-label">AI服务商标识</label>
+                    <input type="text" class="form-input" id="aiConfigProvider" required placeholder="如：zhipuai、dashscope、openai、siliconflow 或自定义">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">API密钥</label>
+                    <input type="password" class="form-input" id="aiConfigApiKey" required placeholder="请输入API密钥">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Endpoint</label>
+                    <input type="text" class="form-input" id="aiConfigEndpoint" required placeholder="如：https://api.openai.com/v1/chat/completions">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">模型</label>
+                    <input type="text" class="form-input" id="aiConfigModel" required placeholder="如：gpt-4o-mini">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">启用状态</label>
+                    <div class="form-toggle">
+                        <input type="checkbox" id="aiConfigEnabled">
+                        <label for="aiConfigEnabled" class="toggle-label"></label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeAIConfigModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js?v=10"></script>
 </body>
 </html>
