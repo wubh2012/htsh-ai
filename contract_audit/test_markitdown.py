@@ -1,7 +1,7 @@
 from markitdown import MarkItDown
 
 md = MarkItDown()
-result = md.convert("d:/AICodingProject/htsh-ai/contract_audit/uploads/cffd9a60f8e444a29417ccdcd2fe0a5d.pdf")
+result = md.convert("d:/AICodingProject/htsh-ai/contract_audit/uploads/2580739a65e645e8baf75f82f9750758.docx")
 
 with open("d:/AICodingProject/htsh-ai/markitdown_output.md", "w", encoding="utf-8") as f:
     f.write(result.text_content)
