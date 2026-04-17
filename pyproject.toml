@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "contract-audit"
 version = "1.0.0"
-description = "基于 AI 的合同智能审核系统"
+description = "基于 AI 的合同智能审核程序"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
@@ -30,5 +30,4 @@ dev = [
 where = ["contract_audit"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 testpaths = ["contract_audit/tests"]

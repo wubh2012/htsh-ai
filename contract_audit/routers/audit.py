@@ -104,28 +104,16 @@ async def start_audit(result_id: int):
         if not row:
             raise HTTPException(status_code=404, detail=f"审核记录 {result_id} 不存在")
 
-        # 获取启用的AI配置
-        cursor = await db.execute(
-            "SELECT provider, api_key FROM ai_config WHERE enabled = TRUE LIMIT 1"
-        )
-        ai_config = await cursor.fetchone()
-
-        if not ai_config:
-            raise HTTPException(
-                status_code=400,
-                detail="未启用任何AI配置，请先在AI配置中启用一个Provider"
-            )
-
         # 执行审核
         auditor = Auditor(db)
         try:
             result = await auditor.audit_contract(
                 result_id=result_id,
                 file_path=row["file_path"],
-                file_type=row["file_type"],
-                provider=ai_config["provider"],
-                api_key=ai_config["api_key"]
+                file_type=row["file_type"]
             )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"审核失败: {str(e)}")
 

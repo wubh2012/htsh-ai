@@ -10,37 +10,6 @@ DATABASE_PATH = os.path.join(BASE_DIR, "data", "contract_audit.db")
 # 上传文件存储路径
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 
-# AI Provider 配置
-AI_PROVIDERS = {
-    "zhipuai": {
-        "name": "智谱AI",
-        "endpoint": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-        "model": "glm-4",
-        "api_key": "",  # 需要用户配置
-    },
-    "dashscope": {
-        "name": "通义千问",
-        "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-        "model": "qwen-turbo",
-        "api_key": "",  # 需要用户配置
-    },
-    "openai": {
-        "name": "OpenAI GPT",
-        "endpoint": "https://api.openai.com/v1/chat/completions",
-        "model": "gpt-4o-mini",
-        "api_key": "",  # 需要用户配置
-    },
-    "siliconflow": {
-        "name": "硅基流动",
-        "endpoint": "https://api.siliconflow.cn/v1/chat/completions",
-        "model": "deepseek-ai/DeepSeek-V3.2",
-        "api_key": "",  # 需要用户配置，实际从数据库读取
-    },
-}
-
-# 默认AI Provider
-DEFAULT_PROVIDER = "siliconflow"
-
 # 合同文本分段大小（字符数）
 TEXT_CHUNK_SIZE = 80000
 

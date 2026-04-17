@@ -25,15 +25,25 @@ class Auditor:
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
 
-    async def audit_contract(self, result_id: int, file_path: str, file_type: str,
-                            provider: str = "zhipuai", api_key: Optional[str] = None) -> AIResultDetail:
+    async def audit_contract(
+        self,
+        result_id: int,
+        file_path: str,
+        file_type: str,
+        provider: Optional[str] = None,
+        api_key: Optional[str] = None,
+        endpoint: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> AIResultDetail:
         """
         审核合同
         :param result_id: 审核结果ID
         :param file_path: 合同文件路径
         :param file_type: 文件类型
-        :param provider: AI Provider
+        :param provider: AI配置名称
         :param api_key: API密钥（可选）
+        :param endpoint: OpenAI兼容接口地址（可选）
+        :param model: 模型名称（可选）
         :return: 审核结果详情
         """
         # 1. 解析文档
@@ -53,7 +63,12 @@ class Auditor:
         prompt = self._build_audit_prompt(content_text, rules)
 
         # 4. 调用AI
-        ai_client = AIClient(provider=provider, api_key=api_key)
+        ai_client = AIClient(
+            provider=provider,
+            api_key=api_key,
+            endpoint=endpoint,
+            model=model,
+        )
         messages = [
             {"role": "system", "content": "你是一名专业的企业法务顾问，负责对合同文本进行初步法律合规性审查。你的任务是严格依据以下审核框架，逐条检查合同内容，识别潜在法律风险。\n\n【审核原则】\n. 仅基于合同原文作答，不得臆测或补充信息\n. 发现问题必须引用原文条款编号和具体内容\n. 每个问题需给出明确的修改建议\n. 无法确定的问题标注「需人工复核」"},
             {"role": "user", "content": prompt}

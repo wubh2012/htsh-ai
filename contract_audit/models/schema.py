@@ -58,7 +58,7 @@ class RuleResponse(RuleBase):
 # ===== AI配置相关模型 =====
 
 class AIConfigBase(BaseModel):
-    provider: str = Field(..., max_length=50, description="AI提供商")
+    provider: str = Field(..., max_length=50, description="AI配置名称")
     api_key: str = Field(..., max_length=200, description="API密钥")
     endpoint: Optional[str] = Field(None, max_length=500, description="API endpoint")
     model: Optional[str] = Field(None, max_length=100, description="模型名称")
@@ -70,6 +70,7 @@ class AIConfigCreate(AIConfigBase):
 
 
 class AIConfigUpdate(BaseModel):
+    provider: Optional[str] = Field(None, max_length=50)
     api_key: Optional[str] = Field(None, max_length=200)
     endpoint: Optional[str] = Field(None, max_length=500)
     model: Optional[str] = Field(None, max_length=100)

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>合同智能审核系统</title>
+    <title>合同智能审核</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
         <aside class="sidebar-left">
             <div class="sidebar-logo">
                 <h1>§ 合同审核</h1>
-                <span>智能法律服务</span>
+                <span></span>
             </div>
             <nav class="nav-menu">
                 <div class="nav-item active" data-page="upload">
@@ -154,7 +154,7 @@
             <section id="page-ai-config" class="page-section">
                 <div class="main-header">
                     <h2>AI配置</h2>
-                    <p>管理AI服务提供商配置，包括API密钥、模型等参数</p>
+                    <p>管理 OpenAI 兼容的 AI 配置，包括配置名称、API 密钥、Endpoint 和模型参数</p>
                 </div>
 
                 <div class="card">
@@ -231,8 +231,8 @@
             <form id="aiConfigForm">
                 <input type="hidden" id="aiConfigOriginalProvider">
                 <div class="form-group">
-                    <label class="form-label">AI服务商标识</label>
-                    <input type="text" class="form-input" id="aiConfigProvider" required placeholder="如：zhipuai、dashscope、openai、siliconflow 或自定义">
+                    <label class="form-label">配置名称</label>
+                    <input type="text" class="form-input" id="aiConfigProvider" required placeholder="如：openai-prod、deepseek-test、backup-endpoint">
                 </div>
                 <div class="form-group">
                     <label class="form-label">API密钥</label>

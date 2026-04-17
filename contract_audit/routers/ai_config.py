@@ -1,18 +1,22 @@
-"""AI配置API"""
-from fastapi import APIRouter, HTTPException, status
+"""AI配置 API"""
 from typing import List
+
+from fastapi import APIRouter, HTTPException, status
+
 from models.database import get_db
 from models.schema import (
-    AIConfigCreate, AIConfigUpdate, AIConfigResponse, MessageResponse
+    AIConfigCreate,
+    AIConfigResponse,
+    AIConfigUpdate,
+    MessageResponse,
 )
-from services.ai_client import AIClient
 
 router = APIRouter(prefix="/api/ai-config", tags=["AI配置"])
 
 
 @router.get("", response_model=List[AIConfigResponse])
 async def get_ai_configs():
-    """获取所有AI配置"""
+    """获取所有 AI 配置"""
     async with get_db() as db:
         cursor = await db.execute(
             "SELECT id, provider, api_key, endpoint, model, enabled, create_time "
@@ -22,27 +26,14 @@ async def get_ai_configs():
         return [dict(row) for row in rows]
 
 
-@router.get("/providers")
-async def get_providers():
-    """获取支持的AI Provider列表"""
-    providers = []
-    for key in AIClient.get_supported_providers():
-        info = AIClient.get_provider_info(key)
-        providers.append({
-            "key": key,
-            "name": info.get("name", key),
-            "model": info.get("model", "")
-        })
-    return {"providers": providers}
-
-
 @router.get("/{provider}", response_model=AIConfigResponse)
 async def get_ai_config(provider: str):
-    """获取指定Provider的配置"""
+    """获取指定名称的 AI 配置"""
     async with get_db() as db:
         cursor = await db.execute(
             "SELECT id, provider, api_key, endpoint, model, enabled, create_time "
-            "FROM ai_config WHERE provider = ?", (provider,)
+            "FROM ai_config WHERE provider = ?",
+            (provider,),
         )
         row = await cursor.fetchone()
         if not row:
@@ -52,35 +43,41 @@ async def get_ai_config(provider: str):
 
 @router.post("", response_model=AIConfigResponse, status_code=status.HTTP_201_CREATED)
 async def create_ai_config(config: AIConfigCreate):
-    """创建AI配置"""
+    """创建 AI 配置"""
     async with get_db() as db:
-        # 检查provider是否已存在
         cursor = await db.execute(
-            "SELECT id FROM ai_config WHERE provider = ?", (config.provider,)
+            "SELECT id FROM ai_config WHERE provider = ?",
+            (config.provider,),
         )
         if await cursor.fetchone():
             raise HTTPException(
                 status_code=400,
-                detail=f"AI配置 {config.provider} 已存在，请使用PUT更新"
+                detail=f"AI配置 {config.provider} 已存在，请使用PUT更新",
             )
 
         cursor = await db.execute(
-            """INSERT INTO ai_config (provider, api_key, endpoint, model, enabled)
-               VALUES (?, ?, ?, ?, ?)""",
-            (config.provider, config.api_key, config.endpoint, config.model, config.enabled)
+            """
+            INSERT INTO ai_config (provider, api_key, endpoint, model, enabled)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                config.provider,
+                config.api_key,
+                config.endpoint,
+                config.model,
+                config.enabled,
+            ),
         )
         await db.commit()
         config_id = cursor.lastrowid
 
-        # 如果启用该配置，自动禁用其他配置
         if config.enabled:
             await db.execute(
                 "UPDATE ai_config SET enabled = FALSE WHERE id != ? AND provider != ?",
-                (config_id, config.provider)
+                (config_id, config.provider),
             )
             await db.commit()
 
-        # 返回创建的配置
         cursor = await db.execute("SELECT * FROM ai_config WHERE id = ?", (config_id,))
         row = await cursor.fetchone()
         return dict(row)
@@ -88,60 +85,77 @@ async def create_ai_config(config: AIConfigCreate):
 
 @router.put("/{provider}", response_model=AIConfigResponse)
 async def update_ai_config(provider: str, config: AIConfigUpdate):
-    """更新AI配置"""
+    """更新 AI 配置"""
     async with get_db() as db:
-        # 检查配置是否存在
-        cursor = await db.execute("SELECT id FROM ai_config WHERE provider = ?", (provider,))
+        cursor = await db.execute(
+            "SELECT id FROM ai_config WHERE provider = ?",
+            (provider,),
+        )
         if not await cursor.fetchone():
             raise HTTPException(status_code=404, detail=f"AI配置 {provider} 不存在")
 
-        # 构建更新语句
+        payload = config.model_dump(exclude_unset=True)
+        new_provider = payload.get("provider", provider)
+
+        if "provider" in payload and new_provider != provider:
+            cursor = await db.execute(
+                "SELECT id FROM ai_config WHERE provider = ?",
+                (new_provider,),
+            )
+            if await cursor.fetchone():
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"AI配置 {new_provider} 已存在，请使用其他名称",
+                )
+
+        field_mapping = {
+            "provider": "provider",
+            "api_key": "api_key",
+            "endpoint": "endpoint",
+            "model": "model",
+            "enabled": "enabled",
+        }
+
         update_fields = []
         update_values = []
-
-        if config.api_key is not None:
-            update_fields.append("api_key = ?")
-            update_values.append(config.api_key)
-        if config.endpoint is not None:
-            update_fields.append("endpoint = ?")
-            update_values.append(config.endpoint)
-        if config.model is not None:
-            update_fields.append("model = ?")
-            update_values.append(config.model)
-        if config.enabled is not None:
-            update_fields.append("enabled = ?")
-            update_values.append(config.enabled)
+        for field_name, db_field in field_mapping.items():
+            if field_name in payload:
+                update_fields.append(f"{db_field} = ?")
+                update_values.append(payload[field_name])
 
         if not update_fields:
             raise HTTPException(status_code=400, detail="没有提供要更新的字段")
 
         update_values.append(provider)
-
         await db.execute(
             f"UPDATE ai_config SET {', '.join(update_fields)} WHERE provider = ?",
-            update_values
+            update_values,
         )
 
-        # 如果启用该配置，自动禁用其他配置
-        if config.enabled:
+        if payload.get("enabled") is True:
             await db.execute(
                 "UPDATE ai_config SET enabled = FALSE WHERE provider != ?",
-                (provider,)
+                (new_provider,),
             )
 
         await db.commit()
 
-        # 返回更新后的配置
-        cursor = await db.execute("SELECT * FROM ai_config WHERE provider = ?", (provider,))
+        cursor = await db.execute(
+            "SELECT * FROM ai_config WHERE provider = ?",
+            (new_provider,),
+        )
         row = await cursor.fetchone()
         return dict(row)
 
 
 @router.delete("/{provider}", response_model=MessageResponse)
 async def delete_ai_config(provider: str):
-    """删除AI配置"""
+    """删除 AI 配置"""
     async with get_db() as db:
-        cursor = await db.execute("SELECT id FROM ai_config WHERE provider = ?", (provider,))
+        cursor = await db.execute(
+            "SELECT id FROM ai_config WHERE provider = ?",
+            (provider,),
+        )
         if not await cursor.fetchone():
             raise HTTPException(status_code=404, detail=f"AI配置 {provider} 不存在")
 

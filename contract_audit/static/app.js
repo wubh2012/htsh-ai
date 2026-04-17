@@ -504,7 +504,7 @@ function renderAIConfigs() {
                         <div class="rule-card-main">
                             <div class="rule-card-name">${config.provider}</div>
                             <div class="rule-card-meta">
-                                <span class="rule-badge rule-badge-type">${getProviderName(config.provider)}</span>
+                                <span class="rule-badge rule-badge-type">OpenAI兼容配置</span>
                                 <span class="rule-badge ${enabledClass === 'enabled' ? 'rule-badge-risk-low' : 'rule-badge-risk-high'}">${enabledText}</span>
                             </div>
                         </div>
@@ -543,16 +543,6 @@ function renderAIConfigs() {
         });
         container.appendChild(card);
     });
-}
-
-function getProviderName(key) {
-    const names = {
-        'zhipuai': '智谱AI',
-        'dashscope': '通义千问',
-        'openai': 'OpenAI',
-        'siliconflow': '硅基流动'
-    };
-    return names[key] || key;
 }
 
 async function toggleAIConfig(provider, enabled) {
@@ -610,7 +600,7 @@ function editAIConfig(provider) {
 }
 
 async function deleteAIConfig(provider) {
-    if (!confirm(`确定要删除 ${getProviderName(provider)} 配置吗？`)) return;
+    if (!confirm(`确定要删除配置 ${provider} 吗？`)) return;
 
     try {
         const response = await fetch(`${API_BASE}/ai-config/${provider}`, { method: 'DELETE' });
@@ -630,18 +620,18 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             const originalProvider = document.getElementById('aiConfigOriginalProvider').value;
-            const provider = document.getElementById('aiConfigProvider').value;
-            const apiKey = document.getElementById('aiConfigApiKey').value;
-            const endpoint = document.getElementById('aiConfigEndpoint').value;
-            const model = document.getElementById('aiConfigModel').value;
+            const provider = document.getElementById('aiConfigProvider').value.trim();
+            const apiKey = document.getElementById('aiConfigApiKey').value.trim();
+            const endpoint = document.getElementById('aiConfigEndpoint').value.trim();
+            const model = document.getElementById('aiConfigModel').value.trim();
             const enabled = document.getElementById('aiConfigEnabled').checked;
 
             const data = {
-                provider,
                 enabled,
                 endpoint: endpoint || null,
                 model: model || null
             };
+            if (provider) data.provider = provider;
             if (apiKey) data.api_key = apiKey;
 
             try {

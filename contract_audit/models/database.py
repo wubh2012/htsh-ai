@@ -70,6 +70,11 @@ VALUES
 """
 
 
+INIT_DEFAULT_AI_CONFIG_SQL = """
+INSERT OR IGNORE INTO ai_config (provider, api_key, endpoint, model, enabled)
+VALUES ('DeepSeek', '', 'https://api.deepseek.com', 'deepseek-chat', FALSE);
+"""
+
 async def init_database():
     """初始化数据库，创建表和默认数据"""
     async with aiosqlite.connect(DATABASE_PATH) as db:
@@ -81,6 +86,8 @@ async def init_database():
 
         # 插入默认规则
         await db.executescript(INIT_DEFAULT_RULES_SQL)
+        # 插入默认DeepSeek AI配置
+        await db.executescript(INIT_DEFAULT_AI_CONFIG_SQL)
         await db.commit()
 
 
