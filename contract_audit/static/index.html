@@ -1,9 +1,15 @@
+<!--
+  内容审核系统前端入口页面。
+  职责边界：提供上传、规则管理、审核结果、AI 配置等页面结构；不直接实现后端审核逻辑。
+  关键副作用：加载 Google Fonts 与本地静态资源，并通过 app.js 与后端 API 交互。
+  关键依赖与约束：依赖 /static/styles.css、/static/app.js 以及 FastAPI 暴露的静态文件与 API 路由。
+-->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>合同智能审核</title>
+    <title>内容审核</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,13 +20,13 @@
         <!-- Left Sidebar -->
         <aside class="sidebar-left">
             <div class="sidebar-logo">
-                <h1>§ 合同审核</h1>
+                <h1>§ 内容审核</h1>
                 <span></span>
             </div>
             <nav class="nav-menu">
                 <div class="nav-item active" data-page="upload">
                     <span class="icon">📤</span>
-                    <span class="text">上传合同</span>
+                    <span class="text">上传内容</span>
                 </div>
                 <div class="nav-item" data-page="rules">
                     <span class="icon">📋</span>
@@ -42,7 +48,7 @@
             <!-- Upload Page -->
             <section id="page-upload" class="page-section active">
                 <div class="main-header">
-                    <h2>上传合同</h2>
+                    <h2>上传内容</h2>
                     <p>支持 .docx 和 .pdf 格式，最大 10MB，上传后在审核结果页点击"AI审核"发起审核</p>
                 </div>
 
@@ -72,7 +78,7 @@
                 </div>
 
                 <div class="usage-guide">
-                    <div class="usage-step"><span class="usage-num">1</span>上传合同文件（.docx / .pdf）</div>
+                    <div class="usage-step"><span class="usage-num">1</span>上传内容文件（.docx / .pdf）</div>
                     <div class="usage-step"><span class="usage-num">2</span>在审核结果页点击"AI审核"发起智能审核</div>
                     <div class="usage-step"><span class="usage-num">3</span>查看风险点列表与AI总结</div>
                     <div class="usage-step"><span class="usage-num">4</span>人工复核，点击通过或驳回</div>
@@ -83,7 +89,7 @@
             <section id="page-rules" class="page-section">
                 <div class="main-header">
                     <h2>规则管理</h2>
-                    <p>配置合同审核规则，包括条款缺失检查和风险关键词检查</p>
+                    <p>配置内容审核规则，包括条款缺失检查和风险关键词检查</p>
                 </div>
 
                 <div class="card">
@@ -114,7 +120,7 @@
 
                     <div id="noResult" class="result-placeholder">
                         <div class="result-placeholder-icon">📋</div>
-                        <p class="empty-state-text">暂无审核记录，请先上传合同</p>
+                        <p class="empty-state-text">暂无审核记录，请先上传内容</p>
                     </div>
 
                     <div id="resultDetail" class="audit-detail">
