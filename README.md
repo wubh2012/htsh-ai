@@ -2,6 +2,8 @@
 
 基于 AI 的内容审核系统，支持 Word (.docx) 和 PDF 文档的自动审核，可按业务规则分析文档内容并生成审核意见。
 
+https://github.com/user-attachments/assets/d3b74086-71fa-4feb-8ddc-1118ac69624d
+
 ## 功能特性
 
 - 支持 Word (.docx) 和 PDF 文档解析
